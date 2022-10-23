@@ -1,0 +1,66 @@
+#final machine learning project 
+# Importing libraries
+import numpy as np
+import pandas as pd
+from scipy.stats import mode
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.svm import SVC
+from sklearn.naive_bayes import GaussianNB
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix
+import os
+
+%matplotlib inline 
+
+#information about Data set
+# Data set was taken from Kaggle, it consists of two CSV files training and testing
+#there are 133 columns in the data set, 132 columns represent the symptoms 
+#and the last dataset is the prognosis
+#data set has no null values and features consist of 0's and 1's
+#Importing the data set 
+
+
+working_directory = os.getcwd() #getting the directory 
+path1 = working_directory + '/Downloads/Testing.csv'#importing testing data
+path2 = working_directory + '/Downloads/Training.csv' #importing training data
+TestData = pd.read_csv(path1) #reading the testing file 
+TrainData = pd.read_csv(path2) # reading the training file
+
+#printing first 5 rows of the dataset 
+print(TestData.head()) #42 rows x 133 Columns
+print(TrainData.head()) #4920 rows x 134 Columns
+
+#printing columns of TestData
+print(TestData.keys())
+
+
+#printing columns of TrainData
+print(TrainData.keys())
+
+
+# Since we are using classification, Need to Check whether the dataset is balanced or not
+#checking our target column "prognosis"
+disease_counts = TrainData["prognosis"].value_counts()
+temp_df = pd.DataFrame({
+    "Disease": disease_counts.index,
+    "Counts": disease_counts.values
+})
+ 
+plt.figure(figsize = (18,8))
+sns.barplot(x = "Disease", y = "Counts", data = temp_df)
+plt.xticks(rotation=90)
+plt.show()
+
+
+#from the graph we can see that there are 120 samples for each disease, so it is balanced. 
+#however our target column "prognosis" is an object data type, This will not work when training our model.
+
+#Using label encoder to convert the column to a numerical datatype. The labels will be converted to numerical form. 
+#turning target to a numerical value. 
+encoder = LabelEncoder()
+TrainData["prognosis"] = encoder.fit_transform(TrainData["prognosis"])
+
+

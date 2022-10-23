@@ -1,12 +1,18 @@
 import pandas as pd
 import numpy as np
+<<<<<<< HEAD
 import matplotlib.pyplot as plt
+=======
+>>>>>>> 1d9d738338608a8e93095c53220d6a8b59b03737
 import os
 from sklearn.preprocessing import LabelEncoder
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import log_loss
+<<<<<<< HEAD
 from sklearn.metrics import accuracy_score
+=======
+>>>>>>> 1d9d738338608a8e93095c53220d6a8b59b03737
 
 '''Set seed'''
 np.random.seed(1)
@@ -70,12 +76,18 @@ symptom; what can we do with it?
 
 
 '''Meanwhile, we can encode the targets into more discrete values'''
+<<<<<<< HEAD
 print("orig unique targets: ", np.unique(train_data['prognosis']))
 print("orig unique targets count: ", len((np.unique(train_data['prognosis']))))
 encoder = LabelEncoder()
 train_data['prognosis'] = encoder.fit_transform(train_data['prognosis'])
 test_data['prognosis'] = encoder.fit_transform(test_data['prognosis'])
 print("unique targets: ", np.unique(train_data['prognosis']))
+=======
+encoder = LabelEncoder()
+train_data['prognosis'] = encoder.fit_transform(train_data['prognosis'])
+test_data['prognosis'] = encoder.fit_transform(test_data['prognosis'])
+>>>>>>> 1d9d738338608a8e93095c53220d6a8b59b03737
 
 
 '''Let us now try some testing on KNN model'''
@@ -86,6 +98,7 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1,
                                                     random_state=1)
 
 
+<<<<<<< HEAD
 #Create model and train iteratively
 neighbor_cnt = 1
 neighbor_dict = {}
@@ -187,3 +200,11 @@ while K <= splits:
     #print("Average error when K=", K, ": ", avg_scores)
 
     K = K+1'''
+=======
+#Create model and train
+model = KNeighborsClassifier(n_neighbors = 1)
+model.fit(x_train, y_train)
+preds = model.predict(x_test)
+#FIXME number of classes between preds and ground truth not equal
+print(log_loss(y_test, preds))
+>>>>>>> 1d9d738338608a8e93095c53220d6a8b59b03737
