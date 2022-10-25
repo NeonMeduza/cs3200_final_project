@@ -72,12 +72,24 @@ symptom; what can we do with it?
 
 
 '''Meanwhile, we can encode the targets into more discrete values'''
+<<<<<<< HEAD
 #print("orig unique targets: ", np.unique(train_data['prognosis']))
 #print("orig unique targets count: ", len((np.unique(train_data['prognosis']))))
 encoder = LabelEncoder()
 train_data['prognosis'] = encoder.fit_transform(train_data['prognosis'])
 test_data['prognosis'] = encoder.fit_transform(test_data['prognosis'])
 #print("unique targets: ", np.unique(train_data['prognosis']))
+=======
+print("orig unique targets: ", np.unique(train_data['prognosis']))
+print("orig unique targets count: ", len((np.unique(train_data['prognosis']))))
+encoder = LabelEncoder()
+train_data['prognosis'] = encoder.fit_transform(train_data['prognosis'])
+test_data['prognosis'] = encoder.fit_transform(test_data['prognosis'])
+print("unique targets: ", np.unique(train_data['prognosis']))
+encoder = LabelEncoder()
+train_data['prognosis'] = encoder.fit_transform(train_data['prognosis'])
+test_data['prognosis'] = encoder.fit_transform(test_data['prognosis'])
+>>>>>>> e3a0970da7f6b704aeaa9c60a4c4c83689da5f7f
 
 
 '''Let us now try some testing on KNN model'''
@@ -87,7 +99,10 @@ y = train_data.iloc[:, -1]
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1,
                                                     random_state=1)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> e3a0970da7f6b704aeaa9c60a4c4c83689da5f7f
 #Create model and train iteratively
 neighbor_cnt = 1
 neighbor_dict = {}
@@ -142,4 +157,15 @@ while start_i < end_i:
     x_train_copy.drop([start_i], inplace=True)
     y_train_copy.drop([start_i], inplace=True)
         
+<<<<<<< HEAD
     start_i = start_i+1'''
+=======
+    total_scores[K] = avg_scores
+    total_weights[K] = min_coef
+            
+    #Print the optimal validation block number and the average error score
+    #print("Optimal validation block: ", min_key)
+    #print("Average error when K=", K, ": ", avg_scores)
+
+    K = K+1'''
+>>>>>>> e3a0970da7f6b704aeaa9c60a4c4c83689da5f7f
