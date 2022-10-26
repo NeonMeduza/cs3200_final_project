@@ -5,8 +5,8 @@ import os
 from sklearn.preprocessing import LabelEncoder
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import log_loss
 from sklearn.metrics import accuracy_score
+from sklearn.feature_selection import VarianceThreshold
 
 '''Set seed'''
 np.random.seed(1)
@@ -72,24 +72,12 @@ symptom; what can we do with it?
 
 
 '''Meanwhile, we can encode the targets into more discrete values'''
-<<<<<<< HEAD
 #print("orig unique targets: ", np.unique(train_data['prognosis']))
 #print("orig unique targets count: ", len((np.unique(train_data['prognosis']))))
 encoder = LabelEncoder()
 train_data['prognosis'] = encoder.fit_transform(train_data['prognosis'])
 test_data['prognosis'] = encoder.fit_transform(test_data['prognosis'])
 #print("unique targets: ", np.unique(train_data['prognosis']))
-=======
-print("orig unique targets: ", np.unique(train_data['prognosis']))
-print("orig unique targets count: ", len((np.unique(train_data['prognosis']))))
-encoder = LabelEncoder()
-train_data['prognosis'] = encoder.fit_transform(train_data['prognosis'])
-test_data['prognosis'] = encoder.fit_transform(test_data['prognosis'])
-print("unique targets: ", np.unique(train_data['prognosis']))
-encoder = LabelEncoder()
-train_data['prognosis'] = encoder.fit_transform(train_data['prognosis'])
-test_data['prognosis'] = encoder.fit_transform(test_data['prognosis'])
->>>>>>> e3a0970da7f6b704aeaa9c60a4c4c83689da5f7f
 
 
 '''Let us now try some testing on KNN model'''
@@ -99,10 +87,21 @@ y = train_data.iloc[:, -1]
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1,
                                                     random_state=1)
 
-<<<<<<< HEAD
+#Detect important features
+var_thres = VarianceThreshold(threshold=0.1)
+var_thres.fit(x_train)
+arr = var_thres.get_support()
+opt_feat = list(encoder.fit_transform(arr))
+print(opt_feat)
 
-=======
->>>>>>> e3a0970da7f6b704aeaa9c60a4c4c83689da5f7f
+#FIXME filter out unwanted features
+i = 0
+while (i < len(opt_feat)):
+    if(opt_feat[i] == 0):
+        x_train.drop(x_train.columns[[i]], inplace=True)
+    i = i+1
+
+
 #Create model and train iteratively
 neighbor_cnt = 1
 neighbor_dict = {}
@@ -137,7 +136,7 @@ opt_k = filtering(neighbor_dict)
 print(opt_k)
 print(neighbor_dict[opt_k])
 
-#Seems 213 might be a good value for number of neighbors; let us test on
+'''#Seems 213 might be a good value for number of neighbors; let us test on
 #other datasets to see if it generalizes well
 splits = 4
 k = 1
@@ -148,7 +147,7 @@ y_train_copy = y_train.copy()
 
 #store validation block
 x_val = x_train_copy[int(((k-1)/splits) * len(x_train_copy)):int((k/splits) * len(x_train_copy))]
-y_val = y_train_copy[int(((k-1)/splits) * len(y_train_copy)):int((k/splits) * len(y_train_copy))]
+y_val = y_train_copy[int(((k-1)/splits) * len(y_train_copy)):int((k/splits) * len(y_train_copy))]'''
 
 '''#FIXME remove valid block from training data
 start_i = int(((k-1)/splits) * len(x_train))
@@ -157,15 +156,4 @@ while start_i < end_i:
     x_train_copy.drop([start_i], inplace=True)
     y_train_copy.drop([start_i], inplace=True)
         
-<<<<<<< HEAD
     start_i = start_i+1'''
-=======
-    total_scores[K] = avg_scores
-    total_weights[K] = min_coef
-            
-    #Print the optimal validation block number and the average error score
-    #print("Optimal validation block: ", min_key)
-    #print("Average error when K=", K, ": ", avg_scores)
-
-    K = K+1'''
->>>>>>> e3a0970da7f6b704aeaa9c60a4c4c83689da5f7f
