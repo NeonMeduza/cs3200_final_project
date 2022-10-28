@@ -94,21 +94,30 @@ arr = var_thres.get_support()
 opt_feat = list(encoder.fit_transform(arr))
 print(opt_feat)
 
-#FIXME filter out unwanted features
+#filter out unwanted features by adding good features to new dataframe
+print(len(x_train.columns))
 i = 0
+j = 0
+x_train_new = pd.DataFrame()
+x_test_new = pd.DataFrame()
 while (i < len(opt_feat)):
-    if(opt_feat[i] == 0):
-        x_train.drop(x_train.columns[[i]], inplace=True)
+    if(opt_feat[i] == 1):
+        #pd.concat([x_train_new, x_train], axis=1)
+        #x_train.drop(x_train.columns[i], axis=1, inplace=True)
+        #print(len(x_train.columns))
+        x_train_new.insert(j, x_train.columns[i], x_train.loc[:, x_train.columns[i]], False)
+        x_test_new.insert(j, x_test.columns[i], x_test.loc[:, x_test.columns[i]], False)
+        j = j+1
     i = i+1
-
+print("num_features:", len(x_train_new.columns))
 
 #Create model and train iteratively
 neighbor_cnt = 1
 neighbor_dict = {}
 while (neighbor_cnt < 300):
     model = KNeighborsClassifier(n_neighbors=neighbor_cnt)
-    model.fit(x_train, y_train)
-    preds = model.predict(x_test)
+    model.fit(x_train_new, y_train)
+    preds = model.predict(x_test_new)
     neighbor_dict[neighbor_cnt] = (accuracy_score(preds, y_test) * 100)
     neighbor_cnt += 1
 #print(neighbor_dict.keys())
@@ -125,16 +134,18 @@ plt.plot(neighbor_dict.keys(), neighbor_dict.values())
 #Variance might be high here; decrease neighbors until accuracy is <95%
 def filtering(x):
     i = 1
+    optimal_k = 0
+    maxK = 0
     while(i <= len(x)):
-        if (x[i] < 95):
+        if (x[i] > maxK):
             optimal_k = i
-            break
+            maxK = x[i]
         i = i+1
     return optimal_k
 
 opt_k = filtering(neighbor_dict)
-print(opt_k)
-print(neighbor_dict[opt_k])
+print("num_neighbors:", opt_k)
+print("accuracy:", neighbor_dict[opt_k])
 
 '''#Seems 213 might be a good value for number of neighbors; let us test on
 #other datasets to see if it generalizes well
