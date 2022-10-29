@@ -63,4 +63,61 @@ plt.show()
 encoder = LabelEncoder()
 TrainData["prognosis"] = encoder.fit_transform(TrainData["prognosis"])
 
+#building the Decision tree model 
+
+#splitting the data
+
+X_train = TrainData.iloc[:, :-1].values 
+y_train = TrainData.iloc[:, 132].values
+X_test = TrainData.iloc[:, :-1].values
+y_test = TrainData.iloc[:, 132].values
+
+#Creating and fitting the Decision Tree 
+
+dt_clf = DecisionTreeClassifier(splitter='best', criterion='entropy', min_samples_leaf=2)
+dt_clf.fit(X_train, y_train)
+
+#Prediction of the decision tree model
+
+pred = dt_clf.predict(X_test)
+pd.DataFrame({
+    'Actual': y_test, 
+    'Predicted': pred
+}).head(10)
+
+#Accuracy of Decision Tree
+print("Accuracy Score: ", accuracy_score(y_test, pred))
+
+#Splitting data for RandomForestClassifier
+X_train = TrainData.iloc[:, :-1].values 
+y_train = TrainData.iloc[:, 132].values
+X_test = TrainData.iloc[:, :-1].values
+y_test = TrainData.iloc[:, 132].values
+
+print(f"Train: {X_train.shape}, {y_train.shape}")
+print(f"Test: {X_test.shape}, {y_test.shape}")
+
+#Creating RandomForestClassifier
+RForest = RandomForestClassifier(criterion='entropy', min_samples_leaf=2)
+
+#running cross validation score on Random Forest
+score = cross_val_score(RForest, X_train, y_train, cv = 10, n_jobs = -1)
+print("Random Forest Classifier")
+print(f"Scores: {score}")
+
+#Fitting the Random Forest Model 
+RForest.fit(X_train,y_train)
+
+#Prediction 
+rf_preds = RForest.predict(X_test)
+print("Accuracy on Test Dataset")
+print(accuracy_score(y_test, rf_preds) *100)
+cf_matrix = confusion_matrix(y_test, rf_preds)
+plt.figure(figsize=(12,8))
+ 
+sns.heatmap(cf_matrix, annot = True)
+plt.title("Confusion Matrix for Combined Model on Test Dataset")
+plt.show()
+
+
 
