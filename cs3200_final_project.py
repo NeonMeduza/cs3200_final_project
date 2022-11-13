@@ -80,7 +80,11 @@ def var_data(x_train, x_test, thresh):
     var_thres.fit(x_train)
     arr = var_thres.get_support()
     opt_feat = list(encoder.fit_transform(arr))
-    print(opt_feat)
+    num_feat = 0
+    for i in range(0, len(opt_feat)):
+        if (opt_feat[i] == 1):
+            num_feat += 1
+    print("num_feat: ", num_feat)
     
     #filter out unwanted features by adding good features to new dataframe
     i = 0
@@ -95,40 +99,7 @@ def var_data(x_train, x_test, thresh):
         i = i+1
     return x_train_new, x_test_new
 #print("num_features:", len(x_train_new.columns))
-'''
-#Detect important features via PCA since it is unsupervised
-x_sums = [0 for _ in range(0, len(x.columns))]
-x_means = []
-col_len = len(x.columns)
-row_len = len(x)
-for i in range(0, col_len):
-    for j in range(0, row_len):
-        x_sums[i] += x.values[j][i]
 
-    x_means.append(x_sums[i]/row_len)
-
-
-x_c = x.values - x_means
-
-dim_reduce = PCA(n_components=20)
-dim_reduce.fit(x_c)
-x_transform = dim_reduce.transform(x.values)
-print(type(x_transform))
-x_train_pca = x_transform[:int(len(x_transform)*0.9), :]
-x_test_pca = x_transform[int(len(x_transform)*0.9):, :]
-print(x_test_pca)
-noneCnt = 0
-for i in range(0, len(x_test_pca)):
-    for j in range(0, len(x_test_pca[i])):
-        if (type(x_test_pca[i][j]) == 'NoneType'):
-            noneCnt += 1
-print(noneCnt)
-print(type(x_test_pca[472][9]))
-print(type(x_test_pca[472]))
-print(type(x_test_pca))
-x_test_pca = pd.DataFrame(x_test_pca)
-print(type(x_test_pca))
-'''
 
 #Create model and train iteratively
 def model_train(X_train, X_test):
@@ -158,23 +129,27 @@ def filtering(dictionary):
             maxK = dictionary[i]
         i = i+1
     return optimal_k
-'''
+
+print("num_feat: ", 132)
 neighbor_dict1 = model_train(x_train, x_test)
 opt_k1 = filtering(neighbor_dict1)
 print("num_neighbors:", opt_k1)
 print("accuracy:", neighbor_dict1[opt_k1])
-'''
-new_x_train, new_x_test = var_data(x_train, x_test, 0.1)
-neighbor_dict2 = model_train(new_x_train, new_x_test)
-opt_k2 = filtering(neighbor_dict2)
-print("num_neighbors2: ", opt_k2)
-print("accuracy2: ", neighbor_dict2[opt_k2])
+print("")
 
 new_x_train, new_x_test = var_data(x_train, x_test, 0.05)
 neighbor_dict3 = model_train(new_x_train, new_x_test)
 opt_k3 = filtering(neighbor_dict3)
-print("num_neighbors3: ", opt_k3)
-print("accuracy3: ", neighbor_dict3[opt_k3])
+print("num_neighbors2: ", opt_k3)
+print("accuracy2: ", neighbor_dict3[opt_k3])
+print("")
+
+new_x_train, new_x_test = var_data(x_train, x_test, 0.1)
+neighbor_dict2 = model_train(new_x_train, new_x_test)
+opt_k2 = filtering(neighbor_dict2)
+print("num_neighbors3: ", opt_k2)
+print("accuracy3: ", neighbor_dict2[opt_k2])
+
 """More features there are, less neighbors are needed and higher accuracy is
 achieved, which explains why having all features present warrants perfect
 accuracy for the first couple hundred neighbors. However, this high accuracy
@@ -337,3 +312,38 @@ while start_i < end_i:
     y_train_copy.drop([start_i], inplace=True)
         
     start_i = start_i+1'''
+    
+'''
+#Detect important features via PCA since it is unsupervised
+x_sums = [0 for _ in range(0, len(x.columns))]
+x_means = []
+col_len = len(x.columns)
+row_len = len(x)
+for i in range(0, col_len):
+    for j in range(0, row_len):
+        x_sums[i] += x.values[j][i]
+
+    x_means.append(x_sums[i]/row_len)
+
+
+x_c = x.values - x_means
+
+dim_reduce = PCA(n_components=20)
+dim_reduce.fit(x_c)
+x_transform = dim_reduce.transform(x.values)
+print(type(x_transform))
+x_train_pca = x_transform[:int(len(x_transform)*0.9), :]
+x_test_pca = x_transform[int(len(x_transform)*0.9):, :]
+print(x_test_pca)
+noneCnt = 0
+for i in range(0, len(x_test_pca)):
+    for j in range(0, len(x_test_pca[i])):
+        if (type(x_test_pca[i][j]) == 'NoneType'):
+            noneCnt += 1
+print(noneCnt)
+print(type(x_test_pca[472][9]))
+print(type(x_test_pca[472]))
+print(type(x_test_pca))
+x_test_pca = pd.DataFrame(x_test_pca)
+print(type(x_test_pca))
+'''
