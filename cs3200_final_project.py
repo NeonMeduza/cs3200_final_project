@@ -136,7 +136,7 @@ opt_k1 = filtering(neighbor_dict1)
 print("num_neighbors:", opt_k1)
 print("accuracy:", neighbor_dict1[opt_k1])
 print("")
-
+'''
 new_x_train, new_x_test = var_data(x_train, x_test, 0.05)
 neighbor_dict3 = model_train(new_x_train, new_x_test)
 opt_k3 = filtering(neighbor_dict3)
@@ -149,7 +149,7 @@ neighbor_dict2 = model_train(new_x_train, new_x_test)
 opt_k2 = filtering(neighbor_dict2)
 print("num_neighbors3: ", opt_k2)
 print("accuracy3: ", neighbor_dict2[opt_k2])
-
+'''
 """More features there are, less neighbors are needed and higher accuracy is
 achieved, which explains why having all features present warrants perfect
 accuracy for the first couple hundred neighbors. However, this high accuracy
@@ -157,6 +157,95 @@ with low neighbors could indicate overfitting, so validation is needed to see
 if variance is high. Also, the weights of the model need to be compared with
 the features deemed important by the variance threshold to ensure the model
 does not have a bias unequal to the actually important features"""
+
+
+splits = 15
+K = 2
+scores = {}
+total_scores = {}
+    
+#Iterate through different K splits
+while K <= splits:
+    #Iterate through different k-th blocks
+    k = 1
+    while k <= K:
+        #Create copies of data to reload at beginning of each iteration
+        x_train_copy = x_train.copy()
+        y_train_copy = y_train.copy()
+
+        
+        #Create validation sets
+        x_val = x_train[int(((k-1)/K) * len(x_train)):int((k/K) * len(x_train))]
+        y_val = y_train[int(((k-1)/K) * len(y_train)):int((k/K) * len(y_train))]
+            
+        #Remove the validation block from the training sets
+        start_i = int(((k-1)/K) * len(x_train))
+        end_i = int((k/K) * len(x_train))
+        while start_i < end_i:
+            x_train_copy.drop(x_train_copy.loc[x_train_copy.index==start_i].index, inplace=True)
+            y_train_copy.drop(y_train_copy.loc[y_train_copy.index==start_i].index, inplace=True)
+            start_i = start_i+1
+                
+        #Begin training
+        model = KNeighborsClassifier(n_neighbors=1)
+        model.fit(x_train_copy, y_train_copy)
+        preds2 = model.predict(x_val)
+        score = accuracy_score(y_val, preds2)
+        #print("Error score when validation block is", k, ": ", score)
+            
+        #Store score and current validation block number in dictionary
+        scores[k] = score
+           
+        k = k+1
+        
+        '''
+        Search through the dictionary to find the lowest score and its block number,
+        along with computing the sum of the scores to help determine the average
+        '''
+      
+    i = 1
+    max_score = scores[1]
+    max_key = 1
+    avg_scores = 0
+    while i < len(scores):
+        if (max_score < scores[i]):
+            max_score = scores[i]
+            max_key = i
+        avg_scores = avg_scores+scores[i]
+        i = i+1
+            
+    avg_scores = avg_scores/K
+        
+    total_scores[K] = avg_scores
+            
+    #Print the optimal validation block number and the average error score
+    #print("Optimal validation block: ", max_key)
+    #print("Average error when K=", K, ": ", avg_scores)
+    
+    K = K+1
+
+plt.plot(total_scores.keys(), total_scores.values())
+plt.title("Average error scores across K=2..15", fontweight="bold")
+plt.xlabel("Number of training blocks")
+plt.ylabel("Accuracy score")
+plt.xticks(range(2,(len(total_scores)+2)))
+plt.gca().invert_xaxis()
+plt.show()
+
+max_score = max(total_scores.values())
+i = 0
+while i < len(total_scores):
+    if total_scores[(list(total_scores.keys()))[i]] == max_score:
+        max_key = (list(total_scores.keys()))[i]
+    i = i+1
+
+print("Optimal K value: ", max_key)
+print("\n")
+print("Estimated test accuracy: ", total_scores[max_key])
+model = KNeighborsClassifier(n_neighbors=1)
+model.fit(x_train, y_train)
+preds = model.predict(x_test)
+print("Actual test accuracy: ", accuracy_score(y_test, preds))
 
 '''
 The model is tested on other datasets to determine how well it generalizes,
