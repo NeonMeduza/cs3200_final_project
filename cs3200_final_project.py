@@ -130,6 +130,7 @@ def filtering(dictionary):
         i = i+1
     return optimal_k
 
+
 print("num_feat: ", 132)
 neighbor_dict1 = model_train(x_train, x_test)
 opt_k1 = filtering(neighbor_dict1)
@@ -246,161 +247,10 @@ model = KNeighborsClassifier(n_neighbors=1)
 model.fit(x_train, y_train)
 preds = model.predict(x_test)
 print("Actual test accuracy: ", accuracy_score(y_test, preds))
+"""Looks like the model is not overfitting, great! Now to compare features
+it determined to be important"""
 
-'''
-The model is tested on other datasets to determine how well it generalizes,
-based on its current accuracy to see what neighbor and features counts are best
-'''
-'''
-blocks = 2
-test_scores = {}
-neighbor_scores = {}
-block_scores = {}
-while blocks < 5:
-    tests = 1
-    while tests <= blocks:
-        x_train_copy = x_train.copy()
-        y_train_copy = y_train.copy()
-        x_test_copy = x_test.copy()
-        y_test_copy = y_test.copy()
-        
-        #Create train sets
-        x_train_slice = x_train[int(((tests-1)/blocks) * len(x_train)):int((tests/blocks) * len(x_train))]
-        y_train_slice = y_train[int(((tests-1)/blocks) * len(y_train)):int((tests/blocks) * len(y_train))]
-        x_test_slice = x_test[int(((tests-1)/blocks) * len(x_test)):int((tests/blocks) * len(x_test))]
-        y_test_slice = y_test[int(((tests-1)/blocks) * len(y_test)):int((tests/blocks) * len(y_test))]
-            
-        #Remove train sets from other train sets
-        start_i = int(((tests-1)/blocks) * len(x_train))
-        end_i = int((tests/blocks) * len(x_train))
-        while start_i < end_i:
-            x_train_copy.drop([start_i], inplace=True)
-            y_train_copy.drop([start_i], inplace=True)
-            x_test_copy.drop([start_i], inplace=True)
-            y_test_copy.drop([start_i], inplace=True)
-                
-            start_i = start_i+1
-        
-        #Train on current set
-        neighbor_cnt = 1
-        while neighbor_cnt <= 300:
-            model = KNeighborsClassifier(n_neighbors=neighbor_cnt)
-            model.fit(x_train_slice, y_train_slice)
-            preds = model.predict(x_test_slice)
-            neighbor_scores[i] = accuracy_score(y_test_slice, preds)
-            
-            neighbor_cnt = neighbor_cnt+1
-            
-        tests = tests+1
-        
-    blocks = blocks+1
-'''
-'''
-splits = 15
-K = 2
-scores = {}
-sub_scores = {}
-total_scores = {}
-#neighbors = {}
-total_neighbors = {}
-    
-#Iterate through different K splits
-while K <= splits:
-    #Iterate through different k-th blocks
-    k = 1
-    while k <= K:
-        #Create copies of data to reload at beginning of each iteration
-        x_train_copy = x_train.copy()
-        y_train_copy = y_train.copy()
 
-        #Create validation sets
-        x_val = x_train[int(((k-1)/K) * len(x_train)):int((k/K) * len(x_train))]
-        y_val = y_train[int(((k-1)/K) * len(y_train)):int((k/K) * len(y_train))]
-            
-        #Remove the validation block from the training sets
-        start_i = int(((k-1)/K) * len(x_train))
-        end_i = int((k/K) * len(x_train))
-        while start_i < end_i:
-            x_train_copy.drop([start_i], inplace=True)
-            y_train_copy.drop([start_i], inplace=True)
-                
-            start_i = start_i+1
-                
-        #Begin training
-        while (i < 300):
-            model = KNeighborsClassifier(n_neighbors=i)
-            model.fit(x_train_copy, y_train_copy)
-            preds = model.predict(x_val)
-            score = (accuracy_score(preds, y_test) * 100)
-            sub_scores[i] = score
-            i = i+1
-        #print("Error score when validation block is", k, ": ", score)
-            
-        #Store score and current validation block number in dictionary
-        scores[k] = sub_scores
-        #weights[k] = model.coef_
-            
-        k = k+1
-        
-        #Error scores are plotted to visually detect which value of k is optimal
-        plt.plot(scores.keys(), scores.values())
-        plt.title("Error scores for k-th validation blocks", fontweight="bold")
-        plt.xlabel("k-th validation block")
-        plt.ylabel("Error score")
-        plt.xticks(range(1,(len(scores)+1)))
-        plt.gca().invert_xaxis()
-        plt.show()
-        
-        
-        Search through the dictionary to find the highest score and its block number,
-        along with computing the sum of the scores to help determine the average
-        
-        
-    i = 1
-    max_score = scores[1]
-    #min_key = 1
-    max_neighbors = 1
-    avg_scores = 0
-    while i < len(scores):
-        if (max_score < scores[i]):
-            max_score = scores[i]
-            #min_key = i
-            max_neighbors = i
-        avg_scores = avg_scores+scores[i]
-        i = i+1
-            
-    avg_scores = avg_scores/K
-        
-    total_scores[K] = avg_scores
-    total_neighbors[K] = max_neighbors
-            
-    #Print the optimal validation block number and the average error score
-    #print("Optimal validation block: ", min_key)
-    #print("Average error when K=", K, ": ", avg_scores)
-
-    K = K+1
-'''
-'''#Seems 213 might be a good value for number of neighbors; let us test on
-#other datasets to see if it generalizes well
-splits = 4
-k = 1
-
-#copy training data
-x_train_copy = x_train.copy()
-y_train_copy = y_train.copy()
-
-#store validation block
-x_val = x_train_copy[int(((k-1)/splits) * len(x_train_copy)):int((k/splits) * len(x_train_copy))]
-y_val = y_train_copy[int(((k-1)/splits) * len(y_train_copy)):int((k/splits) * len(y_train_copy))]'''
-
-'''#FIXME remove valid block from training data
-start_i = int(((k-1)/splits) * len(x_train))
-end_i = int((k/splits) * len(x_train))
-while start_i < end_i:
-    x_train_copy.drop([start_i], inplace=True)
-    y_train_copy.drop([start_i], inplace=True)
-        
-    start_i = start_i+1'''
     
 '''
 #Detect important features via PCA since it is unsupervised
