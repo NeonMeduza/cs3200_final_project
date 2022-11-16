@@ -6,6 +6,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import mean_squared_error
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.decomposition import PCA
 
@@ -130,14 +131,14 @@ def filtering(dictionary):
         i = i+1
     return optimal_k
 
-
+'''
 print("num_feat: ", 132)
 neighbor_dict1 = model_train(x_train, x_test)
 opt_k1 = filtering(neighbor_dict1)
 print("num_neighbors:", opt_k1)
 print("accuracy:", neighbor_dict1[opt_k1])
 print("")
-'''
+
 new_x_train, new_x_test = var_data(x_train, x_test, 0.05)
 neighbor_dict3 = model_train(new_x_train, new_x_test)
 opt_k3 = filtering(neighbor_dict3)
@@ -159,6 +160,7 @@ if variance is high. Also, the weights of the model need to be compared with
 the features deemed important by the variance threshold to ensure the model
 does not have a bias unequal to the actually important features"""
 
+"""
 
 splits = 15
 K = 2
@@ -247,12 +249,15 @@ model = KNeighborsClassifier(n_neighbors=1)
 model.fit(x_train, y_train)
 preds = model.predict(x_test)
 print("Actual test accuracy: ", accuracy_score(y_test, preds))
-"""Looks like the model is not overfitting, great! Now to compare features
-it determined to be important"""
 
-
-    
 '''
+Looks like the model is not overfitting, great! Now to compare features
+it determined to be important
+'''
+
+"""
+    
+
 #Detect important features via PCA since it is unsupervised
 x_sums = [0 for _ in range(0, len(x.columns))]
 x_means = []
@@ -267,10 +272,20 @@ for i in range(0, col_len):
 
 x_c = x.values - x_means
 
-dim_reduce = PCA(n_components=20)
-dim_reduce.fit(x_c)
-x_transform = dim_reduce.transform(x.values)
-print(type(x_transform))
+var_ratios = {}
+for i in range(1, 132):
+    dim_reduce = PCA(n_components=i)
+    dim_reduce.fit(x_c)
+    x_transform = dim_reduce.transform(x.values)
+    var_ratios[i] = sum(list(dim_reduce.explained_variance_ratio_))
+
+for i in range(1, len(var_ratios)):
+    if ((var_ratios[i+1] - var_ratios[i]) < 0.01):
+        print(var_ratios[i])
+        print(i)
+        break
+
+'''
 x_train_pca = x_transform[:int(len(x_transform)*0.9), :]
 x_test_pca = x_transform[int(len(x_transform)*0.9):, :]
 print(x_test_pca)
