@@ -24,8 +24,8 @@ test_data = pd.read_csv(test_data)
 
 #The column has only NA values, so it must be removed
 train_data.drop(train_data.columns[133], axis=1, inplace=True)
-print(len(train_data))
-print(len(test_data))
+#print(len(train_data))
+#print(len(test_data))
 
 '''Inspecting feature types'''
 #print(train_data.dtypes.value_counts())
@@ -259,6 +259,7 @@ it determined to be important
     
 
 #Detect important features via PCA since it is unsupervised
+#Compute averages for each feature
 x_sums = [0 for _ in range(0, len(x.columns))]
 x_means = []
 col_len = len(x.columns)
@@ -269,14 +270,56 @@ for i in range(0, col_len):
 
     x_means.append(x_sums[i]/row_len)
 
+#Generate K eigenvalues and eigenvectors
+x_c = x - x_means
+cov_mat = np.dot(np.transpose(x_c), x_c)
+values, vectors = np.linalg.eig(cov_mat)
+#print(values)
+#print(vectors)
 
-x_c = x.values - x_means
+#Choose K largest values and vectors
+for K in range(1, 30):
+    #Gets K largest eigenvalues
+    choice_values = values[:K]
+    #print(choice_values)
+    #print(choice_values)
+    #Gets corresponding eigenvectors
+    choice_vectors = []
+    for i in range(0, len(vectors)):
+        row = []
+        for j in range(0, K):
+            row.append(vectors[i, j])
+        choice_vectors.append(row)
+    #choice_vectors = vectors[:, i]
+    #print(len(choice_vectors[0]))
+    x_transform = np.dot(x, choice_vectors)
+    print(mean_squared_error(x_transform, x))
+    '''rec_err = 0
+    for i in range(0, len(x)):
+        for j in range(0, K):
+            xt_p = x_transform[i][j]
+            x_p = x.values[i][j]
+            rec_err += abs(xt_p - x_p)
+    print(rec_err)'''
+    #print(x_transform)
+    #for j in range(0, len(vectors)):
+        #choice_mat = np.array()
 
+'''
+dim_reduce = PCA(n_components=1)
+dim_reduce.fit(x_c)
+print(dim_reduce.transform(x))
+'''
+'''
 var_ratios = {}
 for i in range(1, 132):
     dim_reduce = PCA(n_components=i)
     dim_reduce.fit(x_c)
     x_transform = dim_reduce.transform(x.values)
+    
+    max_var = 0
+    for j in range(0, i):
+        max_var += (x_transform())
     var_ratios[i] = sum(list(dim_reduce.explained_variance_ratio_))
 
 for i in range(1, len(var_ratios)):
@@ -284,7 +327,7 @@ for i in range(1, len(var_ratios)):
         print(var_ratios[i])
         print(i)
         break
-
+'''
 '''
 x_train_pca = x_transform[:int(len(x_transform)*0.9), :]
 x_test_pca = x_transform[int(len(x_transform)*0.9):, :]
