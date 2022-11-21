@@ -131,14 +131,14 @@ def filtering(dictionary):
         i = i+1
     return optimal_k
 
-'''
+
 print("num_feat: ", 132)
 neighbor_dict1 = model_train(x_train, x_test)
 opt_k1 = filtering(neighbor_dict1)
 print("num_neighbors:", opt_k1)
 print("accuracy:", neighbor_dict1[opt_k1])
 print("")
-
+'''
 new_x_train, new_x_test = var_data(x_train, x_test, 0.05)
 neighbor_dict3 = model_train(new_x_train, new_x_test)
 opt_k3 = filtering(neighbor_dict3)
@@ -161,7 +161,7 @@ the features deemed important by the variance threshold to ensure the model
 does not have a bias unequal to the actually important features"""
 
 
-"""
+
 splits = 15
 K = 2
 scores = {}
@@ -260,7 +260,7 @@ Looks like the model is not overfitting, great! Now to compare features
 it determined to be important
 '''
 
-"""
+
 
 #Detect important features via PCA since it is unsupervised
 #Compute averages for each feature
@@ -280,7 +280,7 @@ cov_mat = np.dot(np.transpose(x_c), x_c)
 values, vectors = np.linalg.eig(cov_mat)
 #print(values)
 #print(vectors)
-'''
+
 #Choose K largest values and vectors
 max_vars = {}
 for K in range(1, 30):
@@ -323,8 +323,8 @@ for K in range(1, 30):
 print("Most significant symptoms for disease prediction: ", 
       list(x.columns[:K]))
 
-'''
-K = 21
+
+
 dim_reduce = PCA(n_components=K)
 var_ratios = dim_reduce.fit(x_c).explained_variance_ratio_
 plt.title("K-Most Significant Symptoms")
