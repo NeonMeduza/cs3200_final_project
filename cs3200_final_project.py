@@ -160,8 +160,8 @@ if variance is high. Also, the weights of the model need to be compared with
 the features deemed important by the variance threshold to ensure the model
 does not have a bias unequal to the actually important features"""
 
-"""
 
+"""
 splits = 15
 K = 2
 scores = {}
@@ -193,7 +193,7 @@ while K <= splits:
         model = KNeighborsClassifier(n_neighbors=1)
         model.fit(x_train_copy, y_train_copy)
         preds2 = model.predict(x_val)
-        score = accuracy_score(y_val, preds2)
+        score = mean_squared_error(y_val, preds2)
         #print("Error score when validation block is", k, ": ", score)
             
         #Store score and current validation block number in dictionary
@@ -207,13 +207,13 @@ while K <= splits:
         '''
       
     i = 1
-    max_score = scores[1]
-    max_key = 1
+    min_score = scores[1]
+    min_key = 1
     avg_scores = 0
     while i < len(scores):
-        if (max_score < scores[i]):
-            max_score = scores[i]
-            max_key = i
+        if (min_score > scores[i]):
+            min_score = scores[i]
+            min_key = i
         avg_scores = avg_scores+scores[i]
         i = i+1
             
@@ -230,25 +230,30 @@ while K <= splits:
 plt.plot(total_scores.keys(), total_scores.values())
 plt.title("Average error scores across K=2..15", fontweight="bold")
 plt.xlabel("Number of training blocks")
-plt.ylabel("Accuracy score")
+plt.ylabel("Error score")
 plt.xticks(range(2,(len(total_scores)+2)))
 plt.gca().invert_xaxis()
 plt.show()
 
-max_score = max(total_scores.values())
+min_score = min(total_scores.values())
 i = 0
 while i < len(total_scores):
-    if total_scores[(list(total_scores.keys()))[i]] == max_score:
-        max_key = (list(total_scores.keys()))[i]
+    if total_scores[i+2] == min_score:
+        min_key = (list(total_scores.keys()))[i]
+        
     i = i+1
-
-print("Optimal K value: ", max_key)
-print("\n")
-print("Estimated test accuracy: ", total_scores[max_key])
+    
 model = KNeighborsClassifier(n_neighbors=1)
 model.fit(x_train, y_train)
 preds = model.predict(x_test)
-print("Actual test accuracy: ", accuracy_score(y_test, preds))
+
+print("Optimal K value: ", min_key)
+print("\n")
+print("Estimated test accuracy: ", total_scores[min_key])
+model = KNeighborsClassifier(n_neighbors=1)
+model.fit(x_train, y_train)
+preds = model.predict(x_test)
+print("Actual test accuracy: ", mean_squared_error(y_test, preds))
 
 '''
 Looks like the model is not overfitting, great! Now to compare features
@@ -256,7 +261,6 @@ it determined to be important
 '''
 
 """
-    
 
 #Detect important features via PCA since it is unsupervised
 #Compute averages for each feature
@@ -276,8 +280,9 @@ cov_mat = np.dot(np.transpose(x_c), x_c)
 values, vectors = np.linalg.eig(cov_mat)
 #print(values)
 #print(vectors)
-
+'''
 #Choose K largest values and vectors
+max_vars = {}
 for K in range(1, 30):
     #Gets K largest eigenvalues
     choice_values = values[:K]
@@ -285,31 +290,51 @@ for K in range(1, 30):
     #print(choice_values)
     #Gets corresponding eigenvectors
     choice_vectors = []
+    x_choice = []
     for i in range(0, len(vectors)):
-        row = []
+        vector_row = []
+        x_row = []
         for j in range(0, K):
-            row.append(vectors[i, j])
-        choice_vectors.append(row)
-    #choice_vectors = vectors[:, i]
-    #print(len(choice_vectors[0]))
+            vector_row.append(vectors[i, j])
+            x_row.append(x.values[i][j])
+        choice_vectors.append(vector_row)
+        x_choice.append(x_row)
+        
+    #Projects onto new dataspace
     x_transform = np.dot(x, choice_vectors)
-    print(mean_squared_error(x_transform, x))
-    '''rec_err = 0
-    for i in range(0, len(x)):
-        for j in range(0, K):
-            xt_p = x_transform[i][j]
-            x_p = x.values[i][j]
-            rec_err += abs(xt_p - x_p)
-    print(rec_err)'''
-    #print(x_transform)
-    #for j in range(0, len(vectors)):
-        #choice_mat = np.array()
+    
+    #Calculates variance
+    max_var = 0
+    for i in range(0, K):
+        for j in range(0, len(x)):
+            max_var += (((x_transform.real.astype(np.float32)[j][i]) - (
+                x_means[i]))**2)
+            
+    max_var /= len(x)
+    max_vars[K] = max_var
+    #Stops when a threshold is reached and prints the best K value
+    if (K > 1):
+        if (max_vars[K] - max_vars[K-1]) < 0.1:
+            print(max_vars[K] - max_vars[K-1])
+            print(max_vars[K])
+            print(K)
+            break
+
+print("Most significant symptoms for disease prediction: ", 
+      list(x.columns[:K]))
 
 '''
-dim_reduce = PCA(n_components=1)
-dim_reduce.fit(x_c)
-print(dim_reduce.transform(x))
-'''
+K = 21
+dim_reduce = PCA(n_components=K)
+var_ratios = dim_reduce.fit(x_c).explained_variance_ratio_
+plt.title("K-Most Significant Symptoms")
+plt.xlabel("Symptoms")
+plt.ylabel("% of Importance")
+#plt.figure().subplots_adjust(top=0.1, bottom=0.09)
+plt.plot(list(x.columns[:K]), var_ratios)
+plt.show()
+#print(dim_reduce.transform(x))
+
 '''
 var_ratios = {}
 for i in range(1, 132):
