@@ -1,0 +1,346 @@
+# Importing libraries
+import numpy as np
+import pandas as pd
+from scipy.stats import mode
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.svm import SVC
+from sklearn.naive_bayes import GaussianNB
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, mean_squared_error
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.feature_selection import VarianceThreshold
+from sklearn.neighbors import KNeighborsClassifier 
+from sklearn.decomposition import PCA
+
+
+%matplotlib inline
+
+import os
+
+working_directory = os.getcwd() #getting the directory 
+# Reading the train.csv by removing the
+# last column since it's an empty column
+DATA_PATH = working_directory + '/Downloads/Training.csv'
+data = pd.read_csv(DATA_PATH).dropna(axis = 1)
+ 
+# Checking whether the dataset is balanced or not
+disease_counts = data["prognosis"].value_counts()
+temp_df = pd.DataFrame({
+    "Disease": disease_counts.index,
+    "Counts": disease_counts.values
+})
+ 
+plt.figure(figsize = (18,8))
+sns.barplot(x = "Disease", y = "Counts", data = temp_df)
+plt.xticks(rotation=90)
+plt.show()
+
+
+# Encoding the target value into numerical
+# value using LabelEncoder
+encoder = LabelEncoder()
+data["prognosis"] = encoder.fit_transform(data["prognosis"])
+
+
+#splitting the data 
+X = data.iloc[:,:-1]
+y = data.iloc[:, -1]
+X_train, X_test, y_train, y_test =train_test_split(
+  X, y, test_size = 0.2, random_state = 24)
+
+#Print the shape of TRAIN AND TEST
+print(f"Train: {X_train.shape}, {y_train.shape}")
+print(f"Test: {X_test.shape}, {y_test.shape}")
+
+
+
+# Training and testing Random Forest Classifier
+rf_model = RandomForestClassifier(random_state=18)
+rf_model.fit(X_train, y_train)
+preds = rf_model.predict(X_test)
+print(f"Accuracy on train data by Random Forest Classifier\
+: {accuracy_score(y_train, rf_model.predict(X_train))*100}")
+ 
+print(f"Accuracy on test data by Random Forest Classifier\
+: {accuracy_score(y_test, preds)*100}")
+
+cf_matrix = confusion_matrix(y_test, preds)
+plt.figure(figsize=(12,8))
+sns.heatmap(cf_matrix, annot=True)
+plt.title("Confusion Matrix for Random Forest Classifier on Test Data")
+plt.show()
+
+
+#Decision Tree
+dt_clf = DecisionTreeClassifier(splitter='best', criterion='entropy', min_samples_leaf=2)
+dt_clf.fit(X_train, y_train)
+dpreds = dt_clf.predict(X_test) #desicion tree prediction
+print(f"Accuracy on train data by Decision Tree Classifier\
+: {accuracy_score(y_train, dt_clf.predict(X_train))*100}")
+ 
+print(f"Accuracy on test data by Decision Tree Classifier\
+: {accuracy_score(y_test, dpreds)*100}")
+ 
+cf_matrix = confusion_matrix(y_test, dpreds)
+plt.figure(figsize=(12,8))
+sns.heatmap(cf_matrix, annot=True)
+plt.title("Confusion Matrix for Decision Tree Classifier on Test Data")
+plt.show()
+
+
+#using cross validation to see if my models are overfitting. 
+#use lines 163 - 258 as a reference. 
+
+#Decision Tree 
+splits = 15
+K = 2
+scores = {}
+total_scores = {}
+    
+#Iterate through different K splits
+while K <= splits:
+    #Iterate through different k-th blocks
+    k = 1
+    while k <= K:
+        #Create copies of data to reload at beginning of each iteration
+        x_train_copy = X_train.copy()
+        y_train_copy = y_train.copy()
+        
+        #Create validation sets
+        x_val = X_train[int(((k-1)/K) * len(X_train)):int((k/K) * len(X_train))]
+        y_val = y_train[int(((k-1)/K) * len(y_train)):int((k/K) * len(y_train))]
+            
+        #Remove the validation block from the training sets
+        start_i = int(((k-1)/K) * len(X_train))
+        end_i = int((k/K) * len(X_train))
+        while start_i < end_i:
+            x_train_copy.drop(x_train_copy.loc[x_train_copy.index==start_i].index, inplace=True)
+            y_train_copy.drop(y_train_copy.loc[y_train_copy.index==start_i].index, inplace=True)
+            start_i = start_i+1
+                
+        #Begin training
+        model = DecisionTreeClassifier(splitter='best', criterion='entropy', min_samples_leaf=2)
+        model.fit(x_train_copy, y_train_copy)
+        preds2 = model.predict(x_val)
+        score = accuracy_score(y_val, preds2)
+        #print("Error score when validation block is", k, ": ", score)
+            
+        #Store score and current validation block number in dictionary
+        scores[k] = score
+           
+        k = k+1
+        
+       
+      
+    i = 1
+    max_score = scores[1]
+    max_key = 1
+    avg_scores = 0
+    while i < len(scores):
+        if (max_score < scores[i]):
+            max_score = scores[i]
+            max_key = i
+        avg_scores = avg_scores+scores[i]
+        i = i+1
+            
+    avg_scores = avg_scores/K
+        
+    total_scores[K] = avg_scores
+            
+    #Print the optimal validation block number and the average error score
+    #print("Optimal validation block: ", max_key)
+    #print("Average error when K=", K, ": ", avg_scores)
+    
+    K = K+1
+plt.plot(total_scores.keys(), total_scores.values())
+plt.title("Average error scores across K=2..15", fontweight="bold")
+plt.xlabel("Number of training blocks")
+plt.ylabel("Accuracy score")
+plt.xticks(range(2,(len(total_scores)+2)))
+plt.gca().invert_xaxis()
+plt.show()
+max_score = max(total_scores.values())
+i = 0
+while i < len(total_scores):
+    if total_scores[(list(total_scores.keys()))[i]] == max_score:
+        max_key = (list(total_scores.keys()))[i]
+    i = i+1
+print("Optimal K value: ", max_key)
+print("\n")
+print("Estimated test accuracy: ", total_scores[max_key])
+model = DecisionTreeClassifier(splitter='best', criterion='entropy', min_samples_leaf=2)
+model.fit(X_train, y_train)
+preds = model.predict(X_test)
+print("Actual test accuracy: ", accuracy_score(y_test, preds))
+
+
+#using cross validation to see if my models are overfitting. 
+#use lines 163 - 258 as a reference. 
+splits = 15
+K = 2
+scores = {}
+total_scores = {}
+    
+#Iterate through different K splits
+while K <= splits:
+    #Iterate through different k-th blocks
+    k = 1
+    while k <= K:
+        #Create copies of data to reload at beginning of each iteration
+        x_train_copy = X_train.copy()
+        y_train_copy = y_train.copy()
+        
+        #Create validation sets
+        x_val = X_train[int(((k-1)/K) * len(X_train)):int((k/K) * len(X_train))]
+        y_val = y_train[int(((k-1)/K) * len(y_train)):int((k/K) * len(y_train))]
+            
+        #Remove the validation block from the training sets
+        start_i = int(((k-1)/K) * len(X_train))
+        end_i = int((k/K) * len(X_train))
+        while start_i < end_i:
+            x_train_copy.drop(x_train_copy.loc[x_train_copy.index==start_i].index, inplace=True)
+            y_train_copy.drop(y_train_copy.loc[y_train_copy.index==start_i].index, inplace=True)
+            start_i = start_i+1
+                
+        #Begin training
+        model = RandomForestClassifier(random_state=18)
+        model.fit(x_train_copy, y_train_copy)
+        preds2 = model.predict(x_val)
+        score = accuracy_score(y_val, preds2)
+        #print("Error score when validation block is", k, ": ", score)
+            
+        #Store score and current validation block number in dictionary
+        scores[k] = score
+           
+        k = k+1
+        
+       
+      
+    i = 1
+    max_score = scores[1]
+    max_key = 1
+    avg_scores = 0
+    while i < len(scores):
+        if (max_score < scores[i]):
+            max_score = scores[i]
+            max_key = i
+        avg_scores = avg_scores+scores[i]
+        i = i+1
+            
+    avg_scores = avg_scores/K
+        
+    total_scores[K] = avg_scores
+            
+    #Print the optimal validation block number and the average error score
+    #print("Optimal validation block: ", max_key)
+    #print("Average error when K=", K, ": ", avg_scores)
+    
+    K = K+1
+plt.plot(total_scores.keys(), total_scores.values())
+plt.title("Average error scores across K=2..15", fontweight="bold")
+plt.xlabel("Number of training blocks")
+plt.ylabel("Accuracy score")
+plt.xticks(range(2,(len(total_scores)+2)))
+plt.gca().invert_xaxis()
+plt.show()
+max_score = max(total_scores.values())
+i = 0
+while i < len(total_scores):
+    if total_scores[(list(total_scores.keys()))[i]] == max_score:
+        max_key = (list(total_scores.keys()))[i]
+    i = i+1
+print("Optimal K value: ", max_key)
+print("\n")
+print("Estimated test accuracy: ", total_scores[max_key])
+model = RandomForestClassifier(random_state=18)
+model.fit(X_train, y_train)
+preds = model.predict(X_test)
+print("Actual test accuracy: ", accuracy_score(y_test, preds))
+
+
+
+# Training the models on whole data
+final_svm_model = SVC()
+final_nb_model = GaussianNB()
+final_rf_model = RandomForestClassifier(random_state=18)
+final_d_model = DecisionTreeClassifier(splitter='best', criterion='entropy', min_samples_leaf=2)
+final_svm_model.fit(X, y)
+final_nb_model.fit(X, y)
+final_rf_model.fit(X, y) #fitting random forest
+final_d_model.fit(X, y) #fitting decision tree
+# Reading the test data
+
+test_data = pd.read_csv(working_directory + '/Downloads/Testing.csv').dropna(axis=1) #test data
+ 
+test_X = test_data.iloc[:, :-1]
+test_Y = encoder.transform(test_data.iloc[:, -1])
+ 
+# Making prediction by take mode of predictions
+# made by all the classifiers
+svm_preds = final_svm_model.predict(test_X)
+nb_preds = final_nb_model.predict(test_X)
+rf_preds = final_rf_model.predict(test_X) #final random forest
+fd_preds = final_d_model.predict(test_X) #final decision tree
+ 
+final_preds = [mode([i,j,k])[0][0] for i,j,
+               k in zip(svm_preds, fd_preds, rf_preds)]
+ 
+print(f"Accuracy on Test dataset by the combined model\
+: {accuracy_score(test_Y, final_preds)*100}")
+ 
+cf_matrix = confusion_matrix(test_Y, final_preds)
+plt.figure(figsize=(12,8))
+ 
+sns.heatmap(cf_matrix, annot = True)
+plt.title("Confusion Matrix for Combined Model on Test Dataset")
+plt.show()
+
+
+symptoms = X.columns.values
+
+# Creating a symptom index dictionary to encode the
+# input symptoms into numerical form
+symptom_index = {}
+for index, value in enumerate(symptoms):
+    symptom = " ".join([i.capitalize() for i in value.split("_")])
+    symptom_index[symptom] = index
+ 
+data_dict = {
+    "symptom_index":symptom_index,
+    "predictions_classes":encoder.classes_
+}
+ 
+# Defining the Function
+# Input: string containing symptoms separated by commmas
+# Output: Generated predictions by models
+def predictDisease(symptoms):
+    symptoms = symptoms.split(",")
+
+    # creating input data for the models
+    input_data = [0] * len(data_dict["symptom_index"])
+    for symptom in symptoms:
+        index = data_dict["symptom_index"][symptom]
+        input_data[index] = 1
+         
+    # reshaping the input data and converting it
+    # into suitable format for model predictions
+    input_data = np.array(input_data).reshape(1,-1)
+     
+    # generating individual outputs
+    rf_prediction = data_dict["predictions_classes"][final_rf_model.predict(input_data)[0]] #random forest
+    dt_prediction = data_dict["predictions_classes"][final_d_model.predict(input_data)[0]] #decision tree
+     
+    # making final prediction by taking mode of all predictions
+    final_prediction = mode([rf_prediction, dt_prediction])[0][0]
+    predictions = {
+        "rf_model_prediction": rf_prediction,
+        "dt_prediction": dt_prediction,
+        "final_prediction":final_prediction
+    }
+    return predictions
+ 
+# Testing the function
+print(predictDisease("Itching,Skin Rash,Nodal Skin Eruptions"))
