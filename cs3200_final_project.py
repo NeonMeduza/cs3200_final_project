@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import seaborn as sns
 from sklearn.preprocessing import LabelEncoder
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
@@ -24,8 +25,9 @@ test_data = pd.read_csv(test_data)
 
 #The column has only NA values, so it must be removed
 train_data.drop(train_data.columns[133], axis=1, inplace=True)
-#print(len(train_data))
-#print(len(test_data))
+print(len(train_data))
+print(len(test_data))
+print(len(set(train_data.iloc[:, 132])))
 
 '''Inspecting feature types'''
 #print(train_data.dtypes.value_counts())
@@ -60,12 +62,24 @@ while (x < len(train_data.columns)-1):
 It looks like none of the diseases correspond to the 'fluid_overload'
 symptom; what can we do with it?
 '''
-
-
+'''
+# Checking whether the dataset is balanced or not
+disease_counts = train_data["prognosis"].value_counts()
+temp_df = pd.DataFrame({
+    "Disease": disease_counts.index,
+    "Counts": disease_counts.values
+})
+ 
+plt.figure(figsize = (18,8))
+sns.barplot(x = "Disease", y = "Counts", data = temp_df)
+plt.xticks(rotation=90)
+plt.show()
+'''
 '''Meanwhile, we can encode the targets into more discrete values'''
 encoder = LabelEncoder()
 train_data['prognosis'] = encoder.fit_transform(train_data['prognosis'])
 test_data['prognosis'] = encoder.fit_transform(test_data['prognosis'])
+print(set(train_data.iloc[:, 132]))
 
 
 '''Let us now try some testing on KNN model'''
@@ -152,13 +166,13 @@ opt_k2 = filtering(neighbor_dict2)
 print("num_neighbors3: ", opt_k2)
 print("accuracy3: ", neighbor_dict2[opt_k2])
 '''
-"""More features there are, less neighbors are needed and higher accuracy is
+'''More features there are, less neighbors are needed and higher accuracy is
 achieved, which explains why having all features present warrants perfect
 accuracy for the first couple hundred neighbors. However, this high accuracy
 with low neighbors could indicate overfitting, so validation is needed to see
 if variance is high. Also, the weights of the model need to be compared with
 the features deemed important by the variance threshold to ensure the model
-does not have a bias unequal to the actually important features"""
+does not have a bias unequal to the actually important features'''
 
 
 
@@ -330,6 +344,9 @@ var_ratios = dim_reduce.fit(x_c).explained_variance_ratio_
 plt.title("K-Most Significant Symptoms")
 plt.xlabel("Symptoms")
 plt.ylabel("% of Importance")
+ax = plt.gca()
+for tick in ax.get_xticklabels():
+    tick.set_rotation(90)
 #plt.figure().subplots_adjust(top=0.1, bottom=0.09)
 plt.plot(list(x.columns[:K]), var_ratios)
 plt.show()
