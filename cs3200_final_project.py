@@ -152,7 +152,7 @@ opt_k1 = filtering(neighbor_dict1)
 print("num_neighbors:", opt_k1)
 print("accuracy:", neighbor_dict1[opt_k1])
 print("")
-'''
+
 new_x_train, new_x_test = var_data(x_train, x_test, 0.05)
 neighbor_dict3 = model_train(new_x_train, new_x_test)
 opt_k3 = filtering(neighbor_dict3)
@@ -165,8 +165,13 @@ neighbor_dict2 = model_train(new_x_train, new_x_test)
 opt_k2 = filtering(neighbor_dict2)
 print("num_neighbors3: ", opt_k2)
 print("accuracy3: ", neighbor_dict2[opt_k2])
+<<<<<<< HEAD
 '''
 '''More features there are, less neighbors are needed and higher accuracy is
+=======
+
+"""More features there are, less neighbors are needed and higher accuracy is
+>>>>>>> 321fcae217fc5dd16008ada8f93291fe7c2a4050
 achieved, which explains why having all features present warrants perfect
 accuracy for the first couple hundred neighbors. However, this high accuracy
 with low neighbors could indicate overfitting, so validation is needed to see
